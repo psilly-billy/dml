@@ -115,7 +115,47 @@ def delete_album(album_title):
     else:
         return jsonify({"error": "Album not found"}), 404
 
+# Add a song to an album
+@app.route('/albums/<album_title>/songs', methods=['POST'])
+def add_song(album_title):
+    album = db.albums.find_one({"title": album_title})
+    if album:
+        data = request.get_json()
+        song = {
+            "title": data['title'],
+            "length": data['length']
+        }
+        db.albums.update_one({"title": album_title}, {"$push": {"songs": song}})
+        return jsonify({"message": "Song added successfully"}), 201
+    else:
+        return jsonify({"error": "Album not found"}), 404
 
+# Update a song in an album
+@app.route('/albums/<album_title>/songs/<song_title>', methods=['PUT'])
+def update_song(album_title, song_title):
+    album = db.albums.find_one({"title": album_title})
+    if album:
+        data = request.get_json()
+        db.albums.update_one(
+            {"title": album_title, "songs.title": song_title},
+            {"$set": {"songs.$": data}}
+        )
+        return jsonify({"message": "Song updated successfully"})
+    else:
+        return jsonify({"error": "Album not found"}), 404
+
+# Delete a song from an album
+@app.route('/albums/<album_title>/songs/<song_title>', methods=['DELETE'])
+def delete_song(album_title, song_title):
+    album = db.albums.find_one({"title": album_title})
+    if album:
+        db.albums.update_one(
+            {"title": album_title},
+            {"$pull": {"songs": {"title": song_title}}}
+        )
+        return jsonify({"message": "Song deleted successfully"})
+    else:
+        return jsonify({"error": "Album not found"}), 404
 
 
 if __name__ == '__main__':
