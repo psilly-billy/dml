@@ -2,6 +2,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
+from bson import ObjectId
 
 app = Flask(__name__)
 CORS(app)
@@ -9,6 +10,13 @@ CORS(app)
 # Connect to MongoDB
 client = MongoClient('localhost', 27017)
 db = client['music_library']
+
+# Helper function to serialize MongoDB documents
+def serialize_doc(doc):
+    doc['_id'] = str(doc['_id'])
+    return doc
+
+
 
 @app.route('/artists', methods=['GET'])
 def get_artists():
@@ -20,8 +28,9 @@ def get_artists():
 def get_artist(artist_name):
     artist = db.artists.find_one({"name": artist_name})
     if artist:
+        artist = serialize_doc(artist)
         albums = db.albums.find({"artist": artist_name})
-        artist["albums"] = [album["title"] for album in albums]
+        artist["albums"] = [serialize_doc(album)["title"] for album in albums]
         return jsonify(artist)
     else:
         return jsonify({"error": "Artist not found"}), 404
@@ -30,10 +39,9 @@ def get_artist(artist_name):
 def get_album(album_title):
     album = db.albums.find_one({"title": album_title})
     if album:
-        return jsonify(album)
+        return jsonify(serialize_doc(album))
     else:
         return jsonify({"error": "Album not found"}), 404
-
 
 # Add a new artist
 @app.route('/artists', methods=['POST'])

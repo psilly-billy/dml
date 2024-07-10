@@ -1,37 +1,61 @@
-
 import React, { useEffect, useState } from 'react';
-import { getArtists, deleteArtist } from '../services/api';
-import ArtistForm from './ArtistForm';
+import { getArtists, addArtist, deleteArtist } from '../services/api';
+import './Artists.css';
 
-const Artists = () => {
+const Artists = ({ onSelectArtist, selectedArtist, searchQuery }) => {
     const [artists, setArtists] = useState([]);
-
-    const fetchArtists = async () => {
-        const response = await getArtists();
-        setArtists(response.data);
-    };
+    const [showForm, setShowForm] = useState(false);
+    const [newArtist, setNewArtist] = useState('');
 
     useEffect(() => {
-        fetchArtists();
+        getArtists().then(response => {
+            setArtists(response.data);
+        });
     }, []);
 
-    const handleDelete = async (artistName) => {
-        await deleteArtist(artistName);
-        fetchArtists();
+    const filteredArtists = artists.filter(artist => artist.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const handleAddArtist = async () => {
+        if (newArtist) {
+            await addArtist({ name: newArtist });
+            setNewArtist('');
+            setShowForm(false);
+            getArtists().then(response => {
+                setArtists(response.data);
+            });
+        }
+    };
+
+    const handleDeleteArtist = async (artist) => {
+        await deleteArtist(artist);
+        getArtists().then(response => {
+            setArtists(response.data);
+        });
     };
 
     return (
-        <div>
-            <h1>Artists</h1>
-            <ArtistForm onArtistAdded={fetchArtists} />
+        <div className="artists">
+            <h2>Artists</h2>
             <ul>
-                {artists.map(artist => (
-                    <li key={artist}>
-                        {artist} 
-                        <button onClick={() => handleDelete(artist)}>Delete</button>
+                {filteredArtists.map(artist => (
+                    <li key={artist} className={`artist-item ${selectedArtist === artist ? 'selected' : ''}`}>
+                        <span onClick={() => onSelectArtist(artist)}>{artist}</span>
+                        <button className="delete-button" onClick={() => handleDeleteArtist(artist)}>Delete</button>
                     </li>
                 ))}
             </ul>
+            <button onClick={() => setShowForm(!showForm)}>Add Artist</button>
+            {showForm && (
+                <div className="artist-form">
+                    <input 
+                        type="text" 
+                        placeholder="New Artist Name" 
+                        value={newArtist} 
+                        onChange={(e) => setNewArtist(e.target.value)} 
+                    />
+                    <button onClick={handleAddArtist}>Add</button>
+                </div>
+            )}
         </div>
     );
 };

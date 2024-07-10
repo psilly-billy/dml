@@ -1,44 +1,63 @@
-
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getArtist, deleteAlbum } from '../services/api';
-import AlbumForm from './AlbumForm';
+import { getArtists, addArtist, deleteArtist } from '../services/api';
+import './Artists.css';
 
-const Artist = () => {
-    const { name } = useParams();
-    const [artist, setArtist] = useState(null);
-
-    const fetchArtist = async () => {
-        const response = await getArtist(name);
-        setArtist(response.data);
-    };
+const Artists = ({ onSelectArtist, selectedArtist, searchQuery }) => {
+    const [artists, setArtists] = useState([]);
+    const [showForm, setShowForm] = useState(false);
+    const [newArtist, setNewArtist] = useState('');
 
     useEffect(() => {
-        fetchArtist();
-    }, [name]);
+        getArtists().then(response => {
+            setArtists(response.data);
+        });
+    }, []);
 
-    const handleDelete = async (albumTitle) => {
-        await deleteAlbum(albumTitle);
-        fetchArtist();
+    const filteredArtists = artists.filter(artist => artist.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const handleAddArtist = async () => {
+        if (newArtist) {
+            await addArtist({ name: newArtist });
+            setNewArtist('');
+            setShowForm(false);
+            getArtists().then(response => {
+                setArtists(response.data);
+            });
+        }
     };
 
-    if (!artist) return <div>Loading...</div>;
+    const handleDeleteArtist = async (artist) => {
+        await deleteArtist(artist);
+        getArtists().then(response => {
+            setArtists(response.data);
+        });
+    };
 
     return (
-        <div>
-            <h1>{artist.name}</h1>
-            <h2>Albums</h2>
-            <AlbumForm artistName={artist.name} onAlbumAdded={fetchArtist} />
+        <div className="artists">
+            <h2>Artists</h2>
             <ul>
-                {artist.albums.map(album => (
-                    <li key={album}>
-                        {album}
-                        <button onClick={() => handleDelete(album)}>Delete</button>
+                {filteredArtists.map(artist => (
+                    <li key={artist} className={`artist-item ${selectedArtist === artist ? 'selected' : ''}`}>
+                        <span onClick={() => onSelectArtist(artist)}>{artist}</span>
+                        <button className="delete-button" onClick={() => handleDeleteArtist(artist)}>Delete</button>
                     </li>
                 ))}
             </ul>
+            <button onClick={() => setShowForm(!showForm)}>Add Artist</button>
+            {showForm && (
+                <div className="artist-form">
+                    <input 
+                        type="text" 
+                        placeholder="New Artist Name" 
+                        value={newArtist} 
+                        onChange={(e) => setNewArtist(e.target.value)} 
+                    />
+                    <button onClick={handleAddArtist}>Add</button>
+                </div>
+            )}
         </div>
     );
 };
 
-export default Artist;
+export default Artists;

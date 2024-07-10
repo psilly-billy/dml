@@ -1,17 +1,17 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Artists from './components/Artists';
-import Artist from './components/Artist';
-import Album from './components/Album';
+import MainPage from './components/MainPage';
+import LibraryPage from './components/LibraryPage';
+import './App.css';
 
 const App = () => {
+    const [searchQuery, setSearchQuery] = useState('');
+
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<Artists />} />
-                <Route path="/artists/:name" element={<Artist />} />
-                <Route path="/albums/:title" element={<Album />} />
+                <Route path="/" element={<MainPage onSearch={(query) => setSearchQuery(query)} />} />
+                <Route path="/library" element={<LibraryPage searchQuery={searchQuery} />} />
             </Routes>
         </Router>
     );
