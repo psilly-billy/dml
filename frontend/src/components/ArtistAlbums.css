@@ -1,4 +1,3 @@
-
 .albums ul {
     max-height: calc(100vh - 6rem);
     overflow-y: auto;
@@ -32,24 +31,29 @@
 }
 
 .album-item {
+    position: relative;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem;
+    flex-direction: column;
     margin: 0.5rem 0;
-    cursor: pointer;
     background-color: var(--secondary-color);
     color: var(--text-color);
     border-radius: 4px;
     transition: background-color 0.3s;
-    position: relative;
 }
 
 .album-item:hover {
     background-color: var(--primary-color);
 }
 
-.delete-button {
+.album-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+.delete-button, .info-button {
     background-color: #ff4d4d;
     padding: 0.3rem;
     border: none;
@@ -59,10 +63,35 @@
     visibility: hidden;
 }
 
-.album-item:hover .delete-button {
+.info-button {
+    background-color: #588157;
+    margin-right: 0.5rem;
+}
+
+.album-header:hover .delete-button,
+.album-header:hover .info-button {
     visibility: visible;
 }
 
-.album-item span {
+.album-header span {
     flex-grow: 1;
+}
+
+.album-description-drawer {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    background-color: var(--accent-color);
+    border-radius: 0 0 4px 4px;
+    padding: 0 1rem;
+}
+
+.album-item .album-description-drawer {
+    max-height: fit-content; /* Adjust based on the expected content size */
+    padding: 1rem;
+}
+
+.album-description-content {
+    display: flex;
+    flex-direction: column;
 }

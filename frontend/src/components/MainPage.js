@@ -7,13 +7,14 @@ const MainPage = ({ onSearch }) => {
     const navigate = useNavigate();
 
     const handleLibraryNavigation = () => {
+        onSearch(''); // Clear the search query
         navigate('/library');
     };
 
     return (
         <div className="main-page">
             <SearchBar onSearch={onSearch} />
-            <button onClick={handleLibraryNavigation}>Go to Library</button>
+            <button className="library-button" onClick={handleLibraryNavigation}>Go to Library</button>
         </div>
     );
 };

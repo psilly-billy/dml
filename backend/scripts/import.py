@@ -1,4 +1,4 @@
-
+# backend/import_data.py
 from pymongo import MongoClient
 import json
 
@@ -11,7 +11,7 @@ db.artists.drop()
 db.albums.drop()
 
 # Load data from JSON file
-with open('Data\data.json') as f:
+with open('Data/data.json') as f:
     data = json.load(f)
 
 # Insert data into MongoDB

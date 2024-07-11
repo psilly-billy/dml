@@ -1,4 +1,4 @@
-/* frontend/src/components/Artists.css */
+
 .artists ul {
     max-height: calc(100vh - 6rem);
     overflow-y: auto;

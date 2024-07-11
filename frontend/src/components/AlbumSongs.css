@@ -1,4 +1,4 @@
-/* frontend/src/components/AlbumSongs.css */
+
 .songs ul {
     max-height: calc(100vh - 6rem);
     overflow-y: auto;

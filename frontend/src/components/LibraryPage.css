@@ -1,31 +1,32 @@
-/* frontend/src/components/LibraryPage.css */
+
 .library-page {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-gap: 1rem;
     padding: 1rem;
-    height: 100vh;
+    height: fit-content;
     overflow: hidden;
+    align-items: start; /* Align items to the start */
 }
 
 .library-header {
     grid-column: 1 / span 3;
     display: flex;
     justify-content: flex-start;
-    margin-bottom: 0; /* Removed margin */
+    margin-bottom: 1rem;
 }
 
 .home-button {
-    padding: 0.2rem 0.5rem; /* Reduced vertical padding */
-    height: 1.5rem; /* Fixed height */
-    line-height: 1.1rem; /* Adjust line height */
+    padding: 0.2rem 0.5rem;
+    height: 1.5rem;
+    line-height: 1.1rem;
     border: none;
     border-radius: 4px;
     background-color: var(--accent-color);
     color: var(--text-color);
     cursor: pointer;
     transition: background-color 0.3s;
-    font-size: 0.9rem; /* Adjust font size for better appearance */
+    font-size: 0.9rem;
 }
 
 .home-button:hover {
@@ -34,8 +35,8 @@
 
 .block {
     border-radius: 8px;
-    padding: 1rem;
+    padding: 2rem;
     background-color: var(--card-background);
     overflow-y: auto;
-    height: calc(100vh - 4rem); /* Adjusted height to account for padding and header */
+    height:fit-content;
 }

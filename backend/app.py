@@ -1,17 +1,26 @@
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
 from bson import ObjectId
+import re
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Connect to MongoDB
 client = MongoClient('localhost', 27017)
 db = client['music_library']
 
-# Helper function to serialize MongoDB documents
+# Rate limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["2000 per day", "500 per hour"]
+)
+
+#function to serialize MongoDB documents
 def serialize_doc(doc):
     doc['_id'] = str(doc['_id'])
     return doc
@@ -165,6 +174,35 @@ def delete_song(album_title, song_title):
     else:
         return jsonify({"error": "Album not found"}), 404
 
+@app.route('/search', methods=['GET'])
+@limiter.limit("10 per minute")
+def search():
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+
+    # Sanitize the input
+    sanitized_query = re.escape(query)
+
+    artists = list(db.artists.find({"name": {"$regex": sanitized_query, "$options": "i"}}))
+    albums = list(db.albums.find({"title": {"$regex": sanitized_query, "$options": "i"}}))
+    songs = list(db.albums.find({"songs.title": {"$regex": sanitized_query, "$options": "i"}}))
+
+    artist_results = [{"type": "artist", "name": artist['name']} for artist in artists]
+    album_results = [{"type": "album", "title": album['title'], "artist": album['artist']} for album in albums]
+    song_results = [{"type": "song", "title": song['title'], "album": album['title'], "artist": album['artist']}
+                    for album in songs for song in album['songs'] if sanitized_query.lower() in song['title'].lower()]
+
+    results = artist_results + album_results + song_results
+    return jsonify(results)
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Not found"}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
