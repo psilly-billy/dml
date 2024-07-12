@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { getArtist, addAlbum, deleteAlbum, getAlbum } from '../services/api';
+import { getArtist, addAlbum, deleteAlbum, updateAlbum, getAlbum } from '../services/api';
 import './ArtistAlbums.css';
 
 const ArtistAlbums = ({ artistName, onSelectAlbum, selectedAlbum }) => {
     const [artist, setArtist] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [newAlbum, setNewAlbum] = useState({ title: '', description: '' });
+    const [editMode, setEditMode] = useState(false);
+    const [editAlbum, setEditAlbum] = useState({ title: '', description: '' });
+    const [currentAlbum, setCurrentAlbum] = useState('');
     const [drawerStates, setDrawerStates] = useState({});
 
     useEffect(() => {
@@ -34,6 +37,25 @@ const ArtistAlbums = ({ artistName, onSelectAlbum, selectedAlbum }) => {
         });
     };
 
+    const handleEditAlbum = (album) => {
+        setEditMode(true);
+        setCurrentAlbum(album);
+        const albumDetails = artist.albums.find(a => a === album);
+        setEditAlbum({ title: albumDetails, description: drawerStates[album] });
+    };
+
+    const handleUpdateAlbum = async () => {
+        if (editAlbum.title && currentAlbum) {
+            await updateAlbum(currentAlbum, editAlbum);
+            setEditMode(false);
+            setEditAlbum({ title: '', description: '' });
+            setCurrentAlbum('');
+            getArtist(artistName).then(response => {
+                setArtist(response.data);
+            });
+        }
+    };
+
     const handleInfoClick = async (album) => {
         if (drawerStates[album]) {
             setDrawerStates(prevStates => ({
@@ -60,13 +82,35 @@ const ArtistAlbums = ({ artistName, onSelectAlbum, selectedAlbum }) => {
                     <li key={album} className={`album-item ${selectedAlbum === album ? 'selected' : ''}`}>
                         <div className="album-header">
                             <span onClick={() => onSelectAlbum(album)}>{album}</span>
-                            <button className="info-button" onClick={() => handleInfoClick(album)}>Info</button>
-                            <button className="delete-button" onClick={() => handleDeleteAlbum(album)}>Delete</button>
+                            <div className="album-buttons">
+                                <button className="info-button" onClick={() => handleInfoClick(album)}>Info</button>
+                                <button className="edit-button" onClick={() => handleEditAlbum(album)}>Edit</button>
+                                <button className="delete-button" onClick={() => handleDeleteAlbum(album)}>Delete</button>
+                            </div>
                         </div>
                         {drawerStates[album] && (
                             <div className="album-description-drawer">
                                 <div className="album-description-content">
                                     <p>{drawerStates[album]}</p>
+                                </div>
+                            </div>
+                        )}
+                        {editMode && currentAlbum === album && (
+                            <div className="album-form">
+                                <input 
+                                    type="text" 
+                                    placeholder="Edit Album Title" 
+                                    value={editAlbum.title} 
+                                    onChange={(e) => setEditAlbum({ ...editAlbum, title: e.target.value })} 
+                                />
+                                <textarea 
+                                    placeholder="Edit Album Description" 
+                                    value={editAlbum.description} 
+                                    onChange={(e) => setEditAlbum({ ...editAlbum, description: e.target.value })} 
+                                />
+                                <div className="edit-buttons">
+                                    <button onClick={handleUpdateAlbum}>Update</button>
+                                    <button onClick={() => setEditMode(false)}>Cancel</button>
                                 </div>
                             </div>
                         )}

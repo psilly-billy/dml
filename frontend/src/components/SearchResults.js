@@ -14,6 +14,8 @@ const SearchResults = () => {
     const [selectedArtist, setSelectedArtist] = useState(null);
     const [selectedAlbum, setSelectedAlbum] = useState(null);
     const [selectedSong, setSelectedSong] = useState(null);
+    const [showUpdateForm, setShowUpdateForm] = useState(false);
+    const [updatedSong, setUpdatedSong] = useState({ title: '', length: '' });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -67,6 +69,22 @@ const SearchResults = () => {
             setResults(response.data);
         } catch (err) {
             alert('Error deleting song');
+        }
+    };
+
+    const handleUpdateSong = async () => {
+        if (updatedSong.title && updatedSong.length) {
+            try {
+                await axios.put(`http://localhost:5000/albums/${encodeURIComponent(selectedSong.album)}/songs/${encodeURIComponent(selectedSong.title)}`, updatedSong);
+                alert(`Updated song: ${selectedSong.title}`);
+                setShowUpdateForm(false);
+                setUpdatedSong({ title: '', length: '' });
+                // Optionally refresh the search results after update
+                const response = await axios.get(`http://localhost:5000/search?q=${encodeURIComponent(query)}`);
+                setResults(response.data);
+            } catch (err) {
+                alert('Error updating song');
+            }
         }
     };
 
@@ -131,6 +149,25 @@ const SearchResults = () => {
                         <button onClick={() => handlePlaySong(selectedSong)}>Play</button>
                         <button onClick={() => handleAddToPlaylist(selectedSong)}>Add to Playlist</button>
                         <button onClick={() => handleDeleteSong(selectedSong)}>Delete</button>
+                        <button onClick={() => setShowUpdateForm(!showUpdateForm)}>Update</button>
+                        {showUpdateForm && (
+                            <div className="song-update-form">
+                                <input
+                                    type="text"
+                                    placeholder="New Song Title"
+                                    value={updatedSong.title}
+                                    onChange={(e) => setUpdatedSong({ ...updatedSong, title: e.target.value })}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="New Song Length"
+                                    value={updatedSong.length}
+                                    onChange={(e) => setUpdatedSong({ ...updatedSong, length: e.target.value })}
+                                />
+                                <button onClick={handleUpdateSong}>Update</button>
+                                <button onClick={() => setShowUpdateForm(false)}>Cancel</button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

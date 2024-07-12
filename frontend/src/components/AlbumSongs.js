@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAlbum, addSong, deleteSong } from '../services/api';
+import { getAlbum, addSong, deleteSong, updateSong } from '../services/api';
 import './AlbumSongs.css';
 
 const AlbumSongs = ({ albumTitle }) => {
@@ -7,6 +7,8 @@ const AlbumSongs = ({ albumTitle }) => {
     const [showForm, setShowForm] = useState(false);
     const [newSong, setNewSong] = useState({ title: '', length: '' });
     const [selectedSong, setSelectedSong] = useState(null);
+    const [showUpdateForm, setShowUpdateForm] = useState(false);
+    const [updatedSong, setUpdatedSong] = useState({ title: '', length: '' });
 
     useEffect(() => {
         if (albumTitle) {
@@ -34,6 +36,17 @@ const AlbumSongs = ({ albumTitle }) => {
         });
     };
 
+    const handleUpdateSong = async () => {
+        if (updatedSong.title && updatedSong.length) {
+            await updateSong(albumTitle, selectedSong.title, updatedSong);
+            setUpdatedSong({ title: '', length: '' });
+            setShowUpdateForm(false);
+            getAlbum(albumTitle).then(response => {
+                setAlbum(response.data);
+            });
+        }
+    };
+
     const handlePlaySong = (song) => {
         alert(`Playing song: ${song.title}`);
     };
@@ -58,7 +71,31 @@ const AlbumSongs = ({ albumTitle }) => {
                             <button className="play-button" onClick={() => handlePlaySong(song)}>Play</button>
                             <button className="playlist-button" onClick={() => handleAddToPlaylist(song)}>Add to Playlist</button>
                             <button className="delete-button" onClick={() => handleDeleteSong(song.title)}>Delete</button>
+                            <button className="update-button" onClick={() => {
+                                setSelectedSong(song);
+                                setShowUpdateForm(!showUpdateForm);
+                            }}>Edit</button>
                         </div>
+                        {showUpdateForm && selectedSong && selectedSong.title === song.title && (
+                            <div className="song-update-form">
+                                <input
+                                    type="text"
+                                    placeholder="New Song Title"
+                                    value={updatedSong.title}
+                                    onChange={(e) => setUpdatedSong({ ...updatedSong, title: e.target.value })}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="New Song Length"
+                                    value={updatedSong.length}
+                                    onChange={(e) => setUpdatedSong({ ...updatedSong, length: e.target.value })}
+                                />
+                                <div className="update-buttons">
+                                    <button onClick={handleUpdateSong}>Update</button>
+                                    <button onClick={() => setShowUpdateForm(false)}>Cancel</button>
+                                </div>
+                            </div>
+                        )}
                     </li>
                 ))}
             </ul>
