@@ -17,7 +17,7 @@ const LibraryPage = ({ searchQuery }) => {
     return (
         <div className="library-page">
             <div className="library-header">
-                <button className="home-button" onClick={handleHomeNavigation}>Back</button>
+                <button className="home-button" onClick={handleHomeNavigation}>Home</button>
             </div>
             <div className="block artists-block">
                 <Artists 

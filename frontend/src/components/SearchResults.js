@@ -13,6 +13,7 @@ const SearchResults = () => {
     const [error, setError] = useState(null);
     const [selectedArtist, setSelectedArtist] = useState(null);
     const [selectedAlbum, setSelectedAlbum] = useState(null);
+    const [selectedSong, setSelectedSong] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,14 +34,40 @@ const SearchResults = () => {
     const handleArtistClick = (artist) => {
         setSelectedArtist(artist);
         setSelectedAlbum(null);
+        setSelectedSong(null);
     };
 
     const handleAlbumClick = (album) => {
         setSelectedAlbum(album);
+        setSelectedSong(null);
+    };
+
+    const handleSongClick = (song) => {
+        setSelectedSong(song);
     };
 
     const handleHomeNavigation = () => {
         navigate('/');
+    };
+
+    const handlePlaySong = (song) => {
+        alert(`Playing song: ${song.title}`);
+    };
+
+    const handleAddToPlaylist = (song) => {
+        alert(`Adding song to playlist: ${song.title}`);
+    };
+
+    const handleDeleteSong = async (song) => {
+        try {
+            await axios.delete(`http://localhost:5000/albums/${encodeURIComponent(song.album)}/songs/${encodeURIComponent(song.title)}`);
+            alert(`Deleted song: ${song.title}`);
+            // Optionally refresh the search results after deletion
+            const response = await axios.get(`http://localhost:5000/search?q=${encodeURIComponent(query)}`);
+            setResults(response.data);
+        } catch (err) {
+            alert('Error deleting song');
+        }
     };
 
     if (error) {
@@ -50,7 +77,7 @@ const SearchResults = () => {
     return (
         <div className="search-results-page">
             <div className="library-header">
-                <button className="home-button" onClick={handleHomeNavigation}>Home</button>
+                <button className="home-button" onClick={handleHomeNavigation}>Back</button>
             </div>
             <div className="search-results">
                 <h2>Search Results for "{DOMPurify.sanitize(query)}"</h2>
@@ -69,7 +96,7 @@ const SearchResults = () => {
                                     </span>
                                 )}
                                 {result.type === 'song' && (
-                                    <span>
+                                    <span onClick={() => handleSongClick(result)}>
                                         Song: {DOMPurify.sanitize(result.title)} from {DOMPurify.sanitize(result.album)} by {DOMPurify.sanitize(result.artist)}
                                     </span>
                                 )}
@@ -90,9 +117,20 @@ const SearchResults = () => {
                         />
                     </div>
                 )}
-                {selectedAlbum && (
+                {selectedAlbum && !selectedSong && (
                     <div className="block songs-block">
                         <AlbumSongs albumTitle={selectedAlbum} />
+                    </div>
+                )}
+                {selectedSong && (
+                    <div className="block song-details">
+                        <h3>{DOMPurify.sanitize(selectedSong.title)}</h3>
+                        <p>Album: {DOMPurify.sanitize(selectedSong.album)}</p>
+                        <p>Artist: {DOMPurify.sanitize(selectedSong.artist)}</p>
+                        <p>Length: {DOMPurify.sanitize(selectedSong.length)}</p>
+                        <button onClick={() => handlePlaySong(selectedSong)}>Play</button>
+                        <button onClick={() => handleAddToPlaylist(selectedSong)}>Add to Playlist</button>
+                        <button onClick={() => handleDeleteSong(selectedSong)}>Delete</button>
                     </div>
                 )}
             </div>

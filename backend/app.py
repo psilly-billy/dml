@@ -175,23 +175,24 @@ def delete_song(album_title, song_title):
         return jsonify({"error": "Album not found"}), 404
 
 @app.route('/search', methods=['GET'])
-@limiter.limit("10 per minute")
+@limiter.limit("60 per minute")
 def search():
     query = request.args.get('q', '')
     if not query:
         return jsonify([])
 
-    # Sanitize the input
-    sanitized_query = re.escape(query)
+    # Split the query into words and create a regex pattern that matches all words in any order
+    words = query.split()
+    regex_pattern = ".*".join(re.escape(word) for word in words)
 
-    artists = list(db.artists.find({"name": {"$regex": sanitized_query, "$options": "i"}}))
-    albums = list(db.albums.find({"title": {"$regex": sanitized_query, "$options": "i"}}))
-    songs = list(db.albums.find({"songs.title": {"$regex": sanitized_query, "$options": "i"}}))
+    artists = list(db.artists.find({"name": {"$regex": regex_pattern, "$options": "i"}}))
+    albums = list(db.albums.find({"title": {"$regex": regex_pattern, "$options": "i"}}))
+    songs = list(db.albums.find({"songs.title": {"$regex": regex_pattern, "$options": "i"}}))
 
     artist_results = [{"type": "artist", "name": artist['name']} for artist in artists]
     album_results = [{"type": "album", "title": album['title'], "artist": album['artist']} for album in albums]
-    song_results = [{"type": "song", "title": song['title'], "album": album['title'], "artist": album['artist']}
-                    for album in songs for song in album['songs'] if sanitized_query.lower() in song['title'].lower()]
+    song_results = [{"type": "song", "title": song['title'], "length": song['length'], "album": album['title'], "artist": album['artist']}
+                    for album in songs for song in album['songs'] if re.search(regex_pattern, song['title'], re.IGNORECASE)]
 
     results = artist_results + album_results + song_results
     return jsonify(results)
