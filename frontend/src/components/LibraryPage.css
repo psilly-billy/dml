@@ -34,8 +34,11 @@
 
 .block {
     border-radius: 8px;
-    padding: 2rem;
+    padding: 1rem;
     background-color: var(--card-background);
     overflow-y: auto;
-    height:fit-content;
+    height: fit-content;
+    margin: 0.5rem 0; /* Adjust margin to ensure no overlapping */
+    box-sizing: border-box; /* Ensure padding and borders are included in the element's total width and height */
+    border: 1px solid var(--secondary-color); /* Add border to create visual separation */
 }
