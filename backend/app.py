@@ -6,11 +6,14 @@ from pymongo import MongoClient
 import re
 import google.generativeai as genai
 import json
+import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Connect to MongoDB
+mongo_host = os.getenv('MONGO_HOST', 'localhost')
+mongo_port = int(os.getenv('MONGO_PORT', 27017))
 client = MongoClient('localhost', 27017)
 db = client['music_library']
 
