@@ -3,8 +3,9 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from pymongo import MongoClient
-from bson import ObjectId
 import re
+import google.generativeai as genai
+import json
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -206,7 +207,174 @@ def not_found(error):
     return jsonify({"error": "Not found"}), 404
 
 
+# Configure Gemini
+def configure_gemini(api_key):
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    return model.start_chat()
 
+# Generate MongoDB query using Gemini
+def generate_mongo_query(api_key, query):
+    chat = configure_gemini(api_key)
+    prompt = f"""
+    Generate only a valid MongoDB query to retrieve relevant information from a music library database for the query: '{query}'.
+    
+    The database has collections for 'artists', 'albums', and 'songs'.
+    
+    Each 'artist' document has the following structure:
+    {{
+      "name": "Artist Name",
+      "albums": ["Album Title 1", "Album Title 2", ...]
+    }}
+    
+    Each 'album' document has the following structure:
+    {{
+      "artist": "Artist Name",
+      "title": "Album Title",
+      "description": "Album Description",
+      "songs": [
+        {{
+          "title": "Song Title",
+          "length": "Song Length"
+        }},
+        ...
+      ]
+    }}
+    
+    Each 'song' document is embedded within an 'album' document.
+
+    The query needs to handle various edge cases where the user might not mention whether they want an artist, album, or song. The query should be able to retrieve relevant data regardless of the specificity of the input.
+
+    Examples of valid MongoDB queries:
+    
+    Example query for searching an artist named 'Taylor':
+    db.artists.aggregate([
+      {{
+        "$match": {{
+          "name": {{ "$regex": "taylor", "$options": "i" }}
+        }}
+      }},
+      {{
+        "$lookup": {{
+          "from": "albums",
+          "localField": "name",
+          "foreignField": "artist",
+          "as": "albums"
+        }}
+      }},
+      {{
+        "$unwind": "$albums"
+      }},
+      {{
+        "$unwind": "$albums.songs"
+      }},
+      {{
+        "$project": {{
+          "_id": 0,
+          "artist": "$name",
+          "album": "$albums.title",
+          "song": "$albums.songs.title",
+          "length": "$albums.songs.length"
+        }}
+      }}
+    ])
+
+     Example query for searching  'albums by taylor swift':
+    db.artists.aggregate([
+      {{
+        "$match": {{
+          "name": {{ "$regex": "taylor swift", "$options": "i" }}
+        }}
+      }},
+      {{
+        "$lookup": {{
+          "from": "albums",
+          "localField": "name",
+          "foreignField": "artist",
+          "as": "albums"
+        }}
+      }},
+      {{
+        "$unwind": "$albums"
+      }},
+      {{
+        "$project": {{
+          "_id": 0,
+          "artist": "$name",
+          "album": "$albums.title",
+          "description": "$albums.description"
+        }}
+      }}
+    ])
+
+    For searching 'albums or songs about love':
+    db.albums.aggregate([
+      {{
+        "$match": {{
+          "$or": [
+            {{ "title": {{ "$regex": "love", "$options": "i" }} }},
+            {{ "description": {{ "$regex": "love", "$options": "i" }} }},
+            {{ "songs.title": {{ "$regex": "love", "$options": "i" }} }}
+          ]
+        }}
+      }},
+      {{
+        "$unwind": "$songs"
+      }},
+      {{
+        "$project": {{
+          "_id": 0,
+          "artist": "$artist",
+          "album": "$title",
+          "song": "$songs.title",
+          "length": "$songs.length"
+        }}
+      }}
+    ])
+
+    Provide only the MongoDB query without any explanations or comments.
+    """
+    
+    response = chat.send_message(prompt, stream=True)
+    response.resolve()  # Ensure the response is fully generated
+    mongo_query_text = response.candidates[0].content.parts[0].text.strip()
+    print("Generated MongoDB Query:", mongo_query_text)  # Debugging line
+    return mongo_query_text
+
+@app.route('/rag_search', methods=['POST'])
+@limiter.limit("60 per minute")
+def rag_search():
+    data = request.get_json()
+    user_query = data.get('query', '')
+    api_key = data.get('api_key', '')
+
+    if not user_query or not api_key:
+        return jsonify({"error": "Query and API key are required"}), 400
+
+    try:
+        # Generate the MongoDB query
+        mongo_query_text = generate_mongo_query(api_key, user_query)
+        
+        # Clean up the generated query text
+        mongo_query_text = mongo_query_text.replace("```javascript", "").replace("```", "").strip()
+        mongo_query_text = mongo_query_text.replace("db.artists.aggregate([", "[").replace("])", "]").strip()
+        
+        # Parse the cleaned query text to JSON
+        mongo_query_list = json.loads(mongo_query_text)
+        
+        # Execute the generated query
+        generated_results = list(db.artists.aggregate(mongo_query_list))
+        print("Generated query results:", generated_results)  # Debugging line
+        
+        return jsonify({
+            "generated_results": generated_results if isinstance(generated_results, list) else []
+        })
+    except json.JSONDecodeError as json_err:
+        print("Error parsing MongoDB query:", str(json_err))  # Debugging line
+        return jsonify({"error": "Invalid MongoDB query generated"}), 500
+    except Exception as e:
+        print("Error executing MongoDB query:", str(e))  # Debugging line
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

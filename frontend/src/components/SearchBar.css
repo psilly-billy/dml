@@ -1,17 +1,26 @@
-
 .search-container {
     position: relative;
     width: 100%;
     max-width: 500px;
+    margin: 0 auto; /* Center align */
 }
 
 .search-bar {
     display: flex;
     align-items: center;
     width: 100%;
+    margin-bottom: 1rem; /* Add some space between the search bar and the results */
 }
 
-.search-bar input {
+.search-bar input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.search-bar input[type="password"] {
     flex: 1;
     padding: 0.5rem;
     border: 1px solid var(--secondary-color);
@@ -67,4 +76,11 @@
 .error-message {
     color: red;
     margin-top: 0.5rem;
+}
+
+.results-list {
+    margin-top: 1rem;
+    background-color: var(--card-background);
+    border-radius: 4px;
+    padding: 1rem;
 }

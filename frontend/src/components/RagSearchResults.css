@@ -4,14 +4,11 @@
     flex-direction: column;
     height: fit-content;
     overflow: hidden;
-    align-items: center; /* Center align items horizontally */
 }
 
 .library-header {
     display: flex;
     justify-content: flex-start;
-    width: 100%;
-    max-width: 800px;
     margin-bottom: 0.5rem;
 }
 
@@ -35,11 +32,6 @@
 .search-results {
     flex: 1;
     overflow-y: auto;
-    width: 100%;
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Center align items horizontally */
 }
 
 .search-results h2 {
@@ -49,27 +41,44 @@
 .search-results ul {
     list-style: none;
     padding: 0;
-    width: 100%;
 }
 
 .search-results li {
     padding: 0.5rem 0.5rem;
     border-bottom: 1px solid var(--secondary-color);
     cursor: pointer;
-    width: fit-content;
-    padding: auto;
 }
 
 .search-results li:last-child {
     border-bottom: none;
 }
 
+.result-item {
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-item:hover {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.result-details {
+    margin-top: 1rem;
+    background-color: var(--card-background);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
 .interactive-blocks {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-gap: 1rem;
-    width: 100%;
-    max-width: 800px;
 }
 
 .block {
@@ -78,27 +87,6 @@
     background-color: var(--card-background);
     overflow-y: auto;
     height: fit-content;
-    width: 100%;
-}
-
-.song-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.song-details button {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 4px;
-    background-color: var(--accent-color);
-    color: var(--text-color);
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.song-details button:hover {
-    background-color: var(--primary-color);
 }
 
 .song-update-form {
@@ -126,8 +114,4 @@
 
 .song-update-form button:hover {
     background-color: var(--primary-color);
-}
-
-.error-message {
-    color: red;
 }
